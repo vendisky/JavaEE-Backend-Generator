@@ -1,6 +1,8 @@
 # JavaEE-Backend-Generator
 JavaEE Backend Generator, based on Hibernate 5.x and Spring 4.x
 
+<br/>
+
 ### How to use
 
 Edit txt files in 'entity' directory
@@ -15,9 +17,13 @@ Remember to leave the last line blank
 
 Edit config.py
 
-in config.py, 'entities' is a list which could contain multiple class names
+In config.py, 'entities' is a list which could contain multiple class names
 
-then run javaeeGen.py
+<br/>
+
+Run javaeeGen.py
+
+<br/>
 
 ### Output
 

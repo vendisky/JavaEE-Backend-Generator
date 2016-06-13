@@ -84,7 +84,7 @@ import packageName.model.User;
 public class UserDao extends HibernateDaoSupport {
 	
 	@Resource
-	public void setMySessionFactory(SessionFactory sessionFactory){  
+	public void setMySessionFactory(SessionFactory sessionFactory) {  
         super.setSessionFactory(sessionFactory);  
     }
 	
@@ -148,27 +148,27 @@ public class UserService {
 	@Autowired
 	private UserDao userDao;
 
-	public User get(Integer userId){
+	public User get(Integer userId) {
 		return userDao.get(userId);
 	}
 	
-	public Integer save(User user){
+	public Integer save(User user) {
 		return userDao.save(user);
 	}
 	
-	public void update(User user){
+	public void update(User user) {
 		userDao.update(user);
 	}
 	
-	public void delete(User user){
+	public void delete(User user) {
 		userDao.delete(user);
 	}
 	
-	public void delete(Integer userId){
+	public void delete(Integer userId) {
 		userDao.delete(userId);
 	}
 	
-	public List<User> findAll(){
+	public List<User> findAll() {
 		return userDao.findAll();
 	}
 
@@ -191,19 +191,22 @@ def genController(entity):
     outFile = 'controller\\' + entity + 'Controller.java'
     f = open(outFile, 'w+')
     
-    code = """package com.tianze.minihu.controller;
+    code = """// Not recommended. Need to refer https://www.sitepoint.com/creating-crud-app-minutes-angulars-resource/ and RestController to rewrite it.
+
+package packageName.controller;
 
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.tianze.minihu.model.User;
-import com.tianze.minihu.service.UserService;
+import packageName.model.User;
+import packageName.service.UserService;
 
 @Controller
 public class UserController {
@@ -213,14 +216,14 @@ public class UserController {
 
 	@RequestMapping(value="/user/{userId}", method=RequestMethod.GET)
 	@ResponseBody
-	public User get(@PathVariable String userId){
+	public User get(@PathVariable String userId) {
 		User user = userService.get(Integer.valueOf(userId));
 		return user;
 	}
 
 	@RequestMapping(value="/user", method=RequestMethod.POST)
 	@ResponseBody
-	public List<User> save(@RequestBody User user){
+	public List<User> save(@RequestBody User user) {
 		userService.save(user);
 
 		List<User> users = userService.findAll();
@@ -229,7 +232,7 @@ public class UserController {
 
 	@RequestMapping(value="/user/{userId}", method=RequestMethod.PUT)
 	@ResponseBody
-	public List<User> update(@RequestBody User user){
+	public List<User> update(@RequestBody User user) {
 		userService.update(user);
 
 		List<User> users = userService.findAll();
@@ -238,7 +241,7 @@ public class UserController {
 
 	@RequestMapping(value="/user/{userId}", method=RequestMethod.DELETE)
 	@ResponseBody
-	public List<User> delete(@PathVariable String userId){
+	public List<User> delete(@PathVariable String userId) {
 		userService.delete(Integer.valueOf(userId));	
 
 		List<User> users = userService.findAll();
@@ -250,6 +253,115 @@ public class UserController {
 	public List<User> findAll() { 
 		List<User> users = userService.findAll();
 		return users;
+	}
+
+}"""
+
+    code = code.replace('packageName', config.package)
+    code = code.replace('User', entity)
+
+    entityLower = entity[0].lower() + entity[1:]
+    code = code.replace('user', entityLower)
+
+    f.write(code)
+    f.close()
+
+
+
+def genRestController(entity):
+    mkdir('controller')
+
+    outFile = 'controller\\' + entity + 'Controller.java'
+    f = open(outFile, 'w+')
+
+    code = """package packageName.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import packageName.model.User;
+import packageName.service.UserService;
+
+@RestController
+public class UserController {
+	
+	@Autowired
+	private UserService userService;
+	@Autowired
+	private HttpHeaders headers;
+
+	@RequestMapping(value="/user/{userId}", method=RequestMethod.GET)
+	public ResponseEntity<User> get(@PathVariable String userId) {
+		User user = userService.get(Integer.valueOf(userId));
+		if (user==null) {
+			headers.set("status", "404");
+			return new ResponseEntity<User>(null, headers, HttpStatus.NOT_FOUND);
+		}
+		else {
+			headers.set("status", "200");
+			return new ResponseEntity<User>(user, headers, HttpStatus.OK);
+		}
+	}
+
+	@RequestMapping(value="/user", method=RequestMethod.POST)
+	public ResponseEntity<User> save(@RequestBody User user) {
+		Integer userId = userService.save(user);
+		User userCreated = userService.get(userId);
+		
+		headers.set("status", "201");
+		return new ResponseEntity<User>(userCreated, headers, HttpStatus.CREATED);
+	}
+
+	@RequestMapping(value="/user/{userId}", method=RequestMethod.PUT)
+	public ResponseEntity<User> update(@PathVariable String userId, @RequestBody User user) {
+		User userToUpdate = userService.get(Integer.valueOf(userId));
+		if (userToUpdate==null) {
+			headers.set("status", "404");
+			return new ResponseEntity<User>(null, headers, HttpStatus.NOT_FOUND);
+		}
+		else {
+			userService.update(user);
+			User userUpdated = userService.get(Integer.valueOf(userId));
+			headers.set("status", "200");
+			return new ResponseEntity<User>(userUpdated, headers, HttpStatus.OK);
+		}
+	}
+
+	@RequestMapping(value="/user/{userId}", method=RequestMethod.DELETE)
+	public ResponseEntity<User> delete(@PathVariable String userId) {
+		User userToDelete = userService.get(Integer.valueOf(userId));
+		if (userToDelete==null) {
+			headers.set("status", "404");
+			return new ResponseEntity<User>(null, headers, HttpStatus.NOT_FOUND);
+		}
+		else {
+			userService.delete(userToDelete);
+			headers.set("status", "200");
+			return new ResponseEntity<User>(userToDelete, headers, HttpStatus.OK);
+		}
+	}
+
+	@RequestMapping(value="/user", method=RequestMethod.GET)
+	public ResponseEntity<List<User>> findAll() { 
+		List<User> users = userService.findAll();
+		
+		if (users.isEmpty()) {
+			headers.set("status", "404");
+			return new ResponseEntity<List<User>>(null, headers, HttpStatus.NOT_FOUND);
+		}
+		else {
+			headers.set("status", "200");
+			return new ResponseEntity<List<User>>(users, headers, HttpStatus.OK);
+		}
 	}
 
 }"""
@@ -276,6 +388,8 @@ def main():
             genService(entity)
         if config.genController:
             genController(entity)
+        if config.genRestController:
+            genRestController(entity)
 
  
 

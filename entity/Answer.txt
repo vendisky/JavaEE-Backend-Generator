@@ -1,3 +1,6 @@
 Integer answerId
 String content
 Integer upvoteNum
+User user
+Question question
+Set<Upvote> upvotes

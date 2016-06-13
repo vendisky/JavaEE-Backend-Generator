@@ -5,4 +5,5 @@ entityDir = 'entity'
 genModel = True
 genDao = True
 genService = True
-genController = True
+genController = False
+genRestController = True

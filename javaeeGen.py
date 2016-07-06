@@ -279,7 +279,6 @@ def genRestController(entity):
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -296,19 +295,15 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;
-	@Autowired
-	private HttpHeaders headers;
 
 	@RequestMapping(value="/user/{userId}", method=RequestMethod.GET)
 	public ResponseEntity<User> get(@PathVariable String userId) {
 		User user = userService.get(Integer.valueOf(userId));
 		if (user==null) {
-			headers.set("status", "404");
-			return new ResponseEntity<User>(null, headers, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<User>(user, HttpStatus.NOT_FOUND);
 		}
 		else {
-			headers.set("status", "200");
-			return new ResponseEntity<User>(user, headers, HttpStatus.OK);
+			return new ResponseEntity<User>(user, HttpStatus.OK);
 		}
 	}
 
@@ -317,50 +312,38 @@ public class UserController {
 		Integer userId = userService.save(user);
 		User userCreated = userService.get(userId);
 		
-		headers.set("status", "201");
-		return new ResponseEntity<User>(userCreated, headers, HttpStatus.CREATED);
+		return new ResponseEntity<User>(userCreated, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value="/user/{userId}", method=RequestMethod.PUT)
 	public ResponseEntity<User> update(@PathVariable String userId, @RequestBody User user) {
-		User userToUpdate = userService.get(Integer.valueOf(userId));
-		if (userToUpdate==null) {
-			headers.set("status", "404");
-			return new ResponseEntity<User>(null, headers, HttpStatus.NOT_FOUND);
-		}
-		else {
-			userService.update(user);
-			User userUpdated = userService.get(Integer.valueOf(userId));
-			headers.set("status", "200");
-			return new ResponseEntity<User>(userUpdated, headers, HttpStatus.OK);
-		}
+		userService.update(user);
+		User userUpdated = userService.get(Integer.valueOf(userId));
+		return new ResponseEntity<User>(userUpdated, HttpStatus.OK);
 	}
 
 	@RequestMapping(value="/user/{userId}", method=RequestMethod.DELETE)
 	public ResponseEntity<User> delete(@PathVariable String userId) {
 		User userToDelete = userService.get(Integer.valueOf(userId));
 		if (userToDelete==null) {
-			headers.set("status", "404");
-			return new ResponseEntity<User>(null, headers, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<User>(userToDelete, HttpStatus.NOT_FOUND);
 		}
 		else {
 			userService.delete(userToDelete);
-			headers.set("status", "200");
-			return new ResponseEntity<User>(userToDelete, headers, HttpStatus.OK);
+			return new ResponseEntity<User>(userToDelete, HttpStatus.OK);
 		}
 	}
+
 
 	@RequestMapping(value="/user", method=RequestMethod.GET)
 	public ResponseEntity<List<User>> findAll() { 
 		List<User> users = userService.findAll();
 		
 		if (users.isEmpty()) {
-			headers.set("status", "404");
-			return new ResponseEntity<List<User>>(null, headers, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<List<User>>(users, HttpStatus.NOT_FOUND);
 		}
 		else {
-			headers.set("status", "200");
-			return new ResponseEntity<List<User>>(users, headers, HttpStatus.OK);
+			return new ResponseEntity<List<User>>(users, HttpStatus.OK);
 		}
 	}
 
